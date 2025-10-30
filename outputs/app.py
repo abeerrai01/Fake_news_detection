@@ -2,17 +2,23 @@ import streamlit as st
 import joblib
 import re
 import nltk
+import json
 from nltk.corpus import stopwords
 
-# Download stopwords (only first time)
+# --- Setup ---
 nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
 
-# Load your saved model and vectorizer
-tfidf = joblib.load("models/tfidf_vectorizer.pkl")
-model = joblib.load("models/fake_news_model.pkl")
+# --- Load model and vectorizer (cached) ---
+@st.cache_resource
+def load_resources():
+    tfidf = joblib.load("models/tfidf_vectorizer.pkl")
+    model = joblib.load("models/fake_news_model.pkl")
+    return tfidf, model
 
-# Function to clean text
+tfidf, model = load_resources()
+
+# --- Text cleaning ---
 def clean_text(text):
     text = str(text).lower()
     text = re.sub(r"http\S+|www\S+|https\S+", "", text)
@@ -20,31 +26,45 @@ def clean_text(text):
     text = " ".join([w for w in text.split() if w not in stop_words])
     return text
 
-# Function to predict
+# --- Prediction ---
 def predict_news(headline):
     clean = clean_text(headline)
     features = tfidf.transform([clean])
     pred = model.predict(features)[0]
     prob = model.predict_proba(features)[0][1]
     label = "✅ REAL NEWS" if pred == 1 else "❌ FAKE NEWS"
-    return label, prob
+    return label, float(prob)
 
-# --- Streamlit UI ---
+# --- Streamlit config ---
 st.set_page_config(page_title="Fake News Detector", page_icon="📰", layout="centered")
 
-st.title("📰 Fake News Detection App")
-st.write("Enter a news headline below to check if it’s **real** or **fake** using an AI model trained on Indian fake news datasets.")
+# --- Check if running as API (via ?text= query param) ---
+query_params = st.experimental_get_query_params()
+text = query_params.get("text", [None])[0]
 
-headline = st.text_area("Enter a news headline", height=100)
+if text:
+    # act like an API
+    label, prob = predict_news(text)
+    st.write(json.dumps({
+        "headline": text,
+        "prediction": label,
+        "confidence": prob
+    }))
+else:
+    # Normal Streamlit UI
+    st.title("📰 Fake News Detection App")
+    st.write("Enter a news headline below to check if it’s **real** or **fake** using an AI model trained on Indian fake news datasets.")
 
-if st.button("Check"):
-    if headline.strip() == "":
-        st.warning("Please enter a headline first.")
-    else:
-        label, prob = predict_news(headline)
-        st.markdown(f"### 🔎 Prediction: **{label}**")
-        st.progress(float(prob))
-        st.caption(f"Confidence: {prob:.2f}")
+    headline = st.text_area("Enter a news headline", height=100)
 
-st.markdown("---")
-st.caption("Made by Abeer Rai ✨")
+    if st.button("Check"):
+        if headline.strip() == "":
+            st.warning("Please enter a headline first.")
+        else:
+            label, prob = predict_news(headline)
+            st.markdown(f"### 🔎 Prediction: **{label}**")
+            st.progress(float(prob))
+            st.caption(f"Confidence: {prob:.2f}")
+
+    st.markdown("---")
+    st.caption("Made by Abeer Rai ✨")
