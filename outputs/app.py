@@ -3,13 +3,21 @@ import joblib
 import re
 import nltk
 import json
+import os
 from nltk.corpus import stopwords
+import google.generativeai as genai
 
-# --- Setup ---
+# ------------------- SETUP -------------------
 nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
 
-# --- Load model and vectorizer (cached) ---
+# Configure Gemini using environment variable or Streamlit secret
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+
+# Streamlit config
+st.set_page_config(page_title="Fake News Detector", page_icon="📰", layout="centered")
+
+# ------------------- LOAD MODEL -------------------
 @st.cache_resource
 def load_resources():
     tfidf = joblib.load("models/tfidf_vectorizer.pkl")
@@ -18,7 +26,7 @@ def load_resources():
 
 tfidf, model = load_resources()
 
-# --- Text cleaning ---
+# ------------------- TEXT CLEANING -------------------
 def clean_text(text):
     text = str(text).lower()
     text = re.sub(r"http\S+|www\S+|https\S+", "", text)
@@ -26,7 +34,7 @@ def clean_text(text):
     text = " ".join([w for w in text.split() if w not in stop_words])
     return text
 
-# --- Prediction ---
+# ------------------- PREDICTION -------------------
 def predict_news(headline):
     clean = clean_text(headline)
     features = tfidf.transform([clean])
@@ -35,25 +43,45 @@ def predict_news(headline):
     label = "✅ REAL NEWS" if pred == 1 else "❌ FAKE NEWS"
     return label, float(prob)
 
-# --- Streamlit config ---
-st.set_page_config(page_title="Fake News Detector", page_icon="📰", layout="centered")
+# ------------------- GEMINI EXPLANATION -------------------
+def get_gemini_explanation(headline, verdict):
+    try:
+        prompt = f"""
+        A fake news detection model analyzed this headline:
+        "{headline}"
+        The model predicted it as: {verdict}.
+        Give a short explanation in 1-2 sentences why it might be {verdict}.
+        Keep it clear, factual, and easy to understand.
+        """
+        model_gemini = genai.GenerativeModel("gemini-1.5-flash")
+        response = model_gemini.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"(Gemini explanation unavailable: {e})"
 
-# --- Check if running as API (via ?text= query param) ---
+# ------------------- COMBINED FUNCTION -------------------
+def predict_and_explain(headline):
+    verdict, prob = predict_news(headline)
+    explanation = get_gemini_explanation(headline, verdict)
+    return verdict, prob, explanation
+
+# ------------------- API MODE -------------------
 query_params = st.experimental_get_query_params()
 text = query_params.get("text", [None])[0]
 
 if text:
-    # act like an API
-    label, prob = predict_news(text)
+    # act like an API endpoint
+    label, prob, explanation = predict_and_explain(text)
     st.write(json.dumps({
         "headline": text,
         "prediction": label,
-        "confidence": prob
+        "confidence": prob,
+        "gemini_explanation": explanation
     }))
 else:
-    # Normal Streamlit UI
-    st.title("📰 Fake News Detection App")
-    st.write("Enter a news headline below to check if it’s **real** or **fake** using an AI model trained on Indian fake news datasets.")
+    # ------------------- STREAMLIT UI -------------------
+    st.title("📰 Fake News Detection App (Gemini Enhanced)")
+    st.write("Enter a news headline to check if it’s **real or fake**. The ML model predicts, and Gemini explains why!")
 
     headline = st.text_area("Enter a news headline", height=100)
 
@@ -61,10 +89,12 @@ else:
         if headline.strip() == "":
             st.warning("Please enter a headline first.")
         else:
-            label, prob = predict_news(headline)
+            label, prob, explanation = predict_and_explain(headline)
             st.markdown(f"### 🔎 Prediction: **{label}**")
             st.progress(float(prob))
             st.caption(f"Confidence: {prob:.2f}")
+            st.markdown("### 🤖 Gemini Explanation:")
+            st.info(explanation)
 
     st.markdown("---")
     st.caption("Made by Abeer Rai ✨")
