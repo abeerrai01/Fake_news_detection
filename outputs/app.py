@@ -9,8 +9,8 @@ nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
 
 # Load your saved model and vectorizer
-tfidf = joblib.load("D:/Fake_News_Detection/advanced model/models/tfidf_vectorizer.pkl")
-model = joblib.load("D:/Fake_News_Detection/advanced model/models/fake_news_model.pkl")
+tfidf = joblib.load("models/tfidf_vectorizer.pkl")
+model = joblib.load("models/fake_news_model.pkl")
 
 # Function to clean text
 def clean_text(text):
