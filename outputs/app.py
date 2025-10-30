@@ -53,7 +53,7 @@ def get_gemini_explanation(headline, verdict):
         Give a short explanation in 1-2 sentences why it might be {verdict}.
         Keep it clear, factual, and easy to understand.
         """
-        model_gemini = genai.GenerativeModel("gemini-1.5-flash")
+        model_gemini = genai.GenerativeModel("gemini-2.5-flash")
         response = model_gemini.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
