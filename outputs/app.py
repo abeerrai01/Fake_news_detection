@@ -19,8 +19,14 @@ st.set_page_config(page_title="Fake News Detector", page_icon="📰", layout="ce
 
 # ------------------- BACKGROUND IMAGE SETUP -------------------
 def set_background(image_file):
-    with open(image_file, "rb") as f:
+    abs_path = os.path.join(os.path.dirname(__file__), image_file)
+    if not os.path.exists(abs_path):
+        st.warning(f"⚠️ Background image not found: {abs_path}")
+        return
+
+    with open(abs_path, "rb") as f:
         encoded_image = base64.b64encode(f.read()).decode()
+
     st.markdown(
         f"""
         <style>
@@ -33,7 +39,6 @@ def set_background(image_file):
                 color: white;
                 font-family: 'Poppins', sans-serif;
             }}
-            /* Add dark overlay for readability */
             .stApp::before {{
                 content: "";
                 position: fixed;
@@ -53,8 +58,8 @@ def set_background(image_file):
         unsafe_allow_html=True
     )
 
-# 👇 Use your local image here (place inside assets folder)
-set_background("D:/Fake_News_Detection/assets/background.png")
+# 👇 Use your local image here (ensure it's uploaded to GitHub before deploying)
+set_background("assets/background.png")
 
 # ------------------- CUSTOM STYLING -------------------
 st.markdown("""
@@ -64,8 +69,6 @@ st.markdown("""
             color: #ffcc00 !important;
             font-weight: 700;
         }
-
-        /* Buttons */
         div.stButton > button {
             background-color: #ffcc00;
             color: #000;
@@ -75,37 +78,28 @@ st.markdown("""
             transition: 0.3s;
             border: none;
         }
-
         div.stButton > button:hover {
             background-color: #ffaa00;
             color: white;
             transform: scale(1.05);
         }
-
-        /* Text area */
         textarea {
             background-color: rgba(0, 0, 0, 0.5) !important;
             color: #fff !important;
             border-radius: 12px !important;
             border: 1px solid #ffcc00 !important;
         }
-
-        /* Progress bar */
         .stProgress > div > div > div > div {
             background-color: #ffcc00;
         }
-
-        /* Markdown headings */
         .stMarkdown h3 {
             color: #ffcc00;
         }
-
         .stMarkdown p, .stCaption {
             color: #dddddd !important;
         }
     </style>
 """, unsafe_allow_html=True)
-
 
 # ------------------- LOAD MODEL -------------------
 @st.cache_resource
@@ -163,7 +157,6 @@ query_params = st.experimental_get_query_params()
 text = query_params.get("text", [None])[0]
 
 if text:
-    # act like API endpoint
     label, prob = predict_news(text)
     explanation = "".join(stream_gemini_explanation(text, label))
     st.write(json.dumps({
@@ -174,7 +167,6 @@ if text:
     }))
 
 else:
-    # ------------------- STREAMLIT UI -------------------
     st.markdown("<h1>📰 Fake News Detection App (Gemini Enhanced)</h1>", unsafe_allow_html=True)
     st.write("Enter a headline to check if it’s **real or fake**. The ML model predicts instantly — then Gemini explains why! 🤖")
 
@@ -193,7 +185,6 @@ else:
             st.progress(float(prob))
             st.caption(f"Confidence: {prob:.2f}")
 
-            # Gemini explanation section
             st.markdown("### 💬 Gemini Explanation:")
             with st.container():
                 st.markdown(
