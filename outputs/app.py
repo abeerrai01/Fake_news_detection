@@ -4,6 +4,7 @@ import re
 import nltk
 import json
 import os
+import base64
 from nltk.corpus import stopwords
 import google.generativeai as genai
 
@@ -16,17 +17,48 @@ genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 st.set_page_config(page_title="Fake News Detector", page_icon="📰", layout="centered")
 
+# ------------------- BACKGROUND IMAGE SETUP -------------------
+def set_background(image_file):
+    with open(image_file, "rb") as f:
+        encoded_image = base64.b64encode(f.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+            .stApp {{
+                background-image: url("data:image/png;base64,{encoded_image}");
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                background-repeat: no-repeat;
+                color: white;
+                font-family: 'Poppins', sans-serif;
+            }}
+            /* Add dark overlay for readability */
+            .stApp::before {{
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.6);
+                z-index: 0;
+            }}
+            .stApp > * {{
+                position: relative;
+                z-index: 1;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# 👇 Use your local image here (place inside assets folder)
+set_background("assets/background.jpg")
+
 # ------------------- CUSTOM STYLING -------------------
 st.markdown("""
     <style>
-        /* Background gradient */
-        .stApp {
-            background: linear-gradient(135deg, #1c1c1c, #2e2e2e);
-            color: #ffffff;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        /* Title Styling */
         h1 {
             text-align: center;
             color: #ffcc00 !important;
@@ -41,6 +73,7 @@ st.markdown("""
             padding: 0.7em 1.5em;
             font-weight: 600;
             transition: 0.3s;
+            border: none;
         }
 
         div.stButton > button:hover {
@@ -51,7 +84,7 @@ st.markdown("""
 
         /* Text area */
         textarea {
-            background-color: #2b2b2b !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
             color: #fff !important;
             border-radius: 12px !important;
             border: 1px solid #ffcc00 !important;
@@ -62,14 +95,13 @@ st.markdown("""
             background-color: #ffcc00;
         }
 
-        /* Markdown sections */
+        /* Markdown headings */
         .stMarkdown h3 {
             color: #ffcc00;
         }
 
-        /* Caption */
         .stMarkdown p, .stCaption {
-            color: #cccccc !important;
+            color: #dddddd !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -143,7 +175,7 @@ if text:
 
 else:
     # ------------------- STREAMLIT UI -------------------
-    st.title("📰 Fake News Detection App (Gemini Enhanced)")
+    st.markdown("<h1>📰 Fake News Detection App (Gemini Enhanced)</h1>", unsafe_allow_html=True)
     st.write("Enter a headline to check if it’s **real or fake**. The ML model predicts instantly — then Gemini explains why! 🤖")
 
     headline = st.text_area("Enter a news headline", height=100)
@@ -152,17 +184,27 @@ else:
         if headline.strip() == "":
             st.warning("Please enter a headline first.")
         else:
-            # Step 1: Show instant prediction
             label, prob = predict_and_explain(headline)
-            st.markdown(f"### 🔎 Prediction: **{label}**")
+            if "REAL" in label:
+                st.success(f"✅ **Prediction:** {label}")
+            else:
+                st.error(f"❌ **Prediction:** {label}")
+
             st.progress(float(prob))
             st.caption(f"Confidence: {prob:.2f}")
 
-            # Step 2: Stream Gemini explanation
-            st.markdown("### 💬 Gemini Explanation (streaming):")
-            placeholder = st.empty()
-            with placeholder:
+            # Gemini explanation section
+            st.markdown("### 💬 Gemini Explanation:")
+            with st.container():
+                st.markdown(
+                    "<div style='background-color:rgba(0,0,0,0.6); padding:10px; border-left:4px solid #ffcc00; border-radius:8px;'>",
+                    unsafe_allow_html=True,
+                )
                 st.write_stream(stream_gemini_explanation(headline, label))
+                st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("---")
-    st.caption("Made by Abeer Rai ✨")
+    st.markdown(
+        "<div style='text-align:center; color:gray;'>Made with ❤️ by <b>Abeer Rai</b> | Powered by Gemini ✨</div>",
+        unsafe_allow_html=True,
+    )
