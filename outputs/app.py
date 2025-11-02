@@ -54,7 +54,7 @@ def set_background(image_file):
     )
 
 # 👇 Use your local image here (place inside assets folder)
-set_background("assets/background.jpg")
+set_background("assets/background.png")
 
 # ------------------- CUSTOM STYLING -------------------
 st.markdown("""
