@@ -59,7 +59,7 @@ def set_background(image_file):
     )
 
 # 👇 Use your local image here (ensure it's uploaded to GitHub before deploying)
-set_background("assets/background.png")
+set_background("background.png")
 
 # ------------------- CUSTOM STYLING -------------------
 st.markdown("""
