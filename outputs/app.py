@@ -18,6 +18,7 @@ genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 st.set_page_config(page_title="Fake News Detector", page_icon="📰", layout="centered")
 
 # ------------------- BACKGROUND IMAGE SETUP -------------------
+# ------------------- BACKGROUND IMAGE SETUP -------------------
 def set_background(image_file):
     abs_path = os.path.join(os.path.dirname(__file__), image_file)
     if not os.path.exists(abs_path):
@@ -30,15 +31,15 @@ def set_background(image_file):
     st.markdown(
         f"""
         <style>
+            /* Background setup */
             .stApp {{
-                background-image: url("data:image/png;base64,{encoded_image}");
+                background: url("data:image/png;base64,{encoded_image}") no-repeat center center fixed;
                 background-size: cover;
-                background-position: center;
-                background-attachment: fixed;
-                background-repeat: no-repeat;
                 color: white;
                 font-family: 'Poppins', sans-serif;
             }}
+
+            /* Dark overlay for readability */
             .stApp::before {{
                 content: "";
                 position: fixed;
@@ -46,17 +47,41 @@ def set_background(image_file):
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background-color: rgba(0, 0, 0, 0.6);
+                background-color: rgba(0, 0, 0, 0.4);
                 z-index: 0;
             }}
-            .stApp > * {{
+
+            /* Ensure all Streamlit elements sit above the overlay */
+            .stApp * {{
                 position: relative;
                 z-index: 1;
+            }}
+
+            /* Remove white/gray background that hides image */
+            .block-container {{
+                background-color: transparent !important;
+                padding-top: 2rem;
+                padding-bottom: 2rem;
+            }}
+
+            /* Hide unnecessary borders */
+            header, .css-18e3th9, .css-1d391kg {{
+                background: transparent !important;
+            }}
+
+            /* Scrollbars transparent on desktop */
+            ::-webkit-scrollbar {{
+                width: 8px;
+            }}
+            ::-webkit-scrollbar-thumb {{
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 10px;
             }}
         </style>
         """,
         unsafe_allow_html=True
     )
+
 
 # 👇 Use your local image here (ensure it's uploaded to GitHub before deploying)
 set_background("background.png")
