@@ -16,6 +16,65 @@ genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 st.set_page_config(page_title="Fake News Detector", page_icon="📰", layout="centered")
 
+# ------------------- CUSTOM STYLING -------------------
+st.markdown("""
+    <style>
+        /* Background gradient */
+        .stApp {
+            background: linear-gradient(135deg, #1c1c1c, #2e2e2e);
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Title Styling */
+        h1 {
+            text-align: center;
+            color: #ffcc00 !important;
+            font-weight: 700;
+        }
+
+        /* Buttons */
+        div.stButton > button {
+            background-color: #ffcc00;
+            color: #000;
+            border-radius: 12px;
+            padding: 0.7em 1.5em;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        div.stButton > button:hover {
+            background-color: #ffaa00;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Text area */
+        textarea {
+            background-color: #2b2b2b !important;
+            color: #fff !important;
+            border-radius: 12px !important;
+            border: 1px solid #ffcc00 !important;
+        }
+
+        /* Progress bar */
+        .stProgress > div > div > div > div {
+            background-color: #ffcc00;
+        }
+
+        /* Markdown sections */
+        .stMarkdown h3 {
+            color: #ffcc00;
+        }
+
+        /* Caption */
+        .stMarkdown p, .stCaption {
+            color: #cccccc !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+
 # ------------------- LOAD MODEL -------------------
 @st.cache_resource
 def load_resources():
