@@ -228,6 +228,6 @@ with tabs[1]:
 
 # ------------------- FOOTER -------------------
 st.markdown(
-    "<div style='text-align:center; color:gray;'>Made with ❤️ by <b>Abeer Rai</b> | Powered by Gemini ✨</div>",
+    "<div style='text-align:center; color:gray;'>Made with ❤️ by <b>Abeer Rai, Pushpendra Tripathi and Pankaj Kumar Yadav</b> | Powered by RAG ✨</div>",
     unsafe_allow_html=True,
 )
